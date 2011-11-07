@@ -67,7 +67,8 @@ static inline void fence_after(memory_order order)
 template<typename T>
 class atomic_linux_arm_4 {
 
-    typedef int (kernel_cmpxchg_t)(T oldval, T newval, T *ptr);
+//    typedef int (kernel_cmpxchg_t)(T oldval, T newval, T *ptr);
+    typedef int (kernel_cmpxchg_t)(T oldval, T newval, volatile T *ptr);
 #    define BOOST_ATOMIC_KERNEL_CMPXCHG (*(kernel_cmpxchg_t *)0xffff0fc0)
     // Returns 0 if *ptr was changed.
 
@@ -96,7 +97,7 @@ public:
         // Also it seems that when an ll/sc implementation is used the kernel
         // loops until the store succeeds.
         bool success = BOOST_ATOMIC_KERNEL_CMPXCHG(expected,desired,&i)==0;
-        if (!success) e = load(memory_order_relaxed);
+        if (!success) expected = load(memory_order_relaxed);
         return success;
     }
     bool compare_exchange_weak(
@@ -111,20 +112,21 @@ public:
     {
         // Copied from build_exchange.
                 T o=load(memory_order_relaxed);
-                do {} while(!compare_exchange_weak(o, replacement, order));
+                do {} while(!compare_exchange_weak(o, replacement, order, order));
                 return o;
         // Note that ARM has an atomic swap instruction that we could use here:
         //   T oldval;
         //   asm volatile ("swp\t%0, %1, [%2]" : "=&r"(oldval) : "r" (replacement), "r" (&i) : "memory");
         //   return oldval;
         // This instruction is deprecated in architecture >= 6.  I'm unsure how inefficient
-        // its implementation is on those newer architectures.  I don't think this would gain
+        // its implementation is on those newer architectures.  
+        // I don't think this would gain
         // much since exchange() is not used often.
     }
     
     bool is_lock_free(void) const volatile {return true;}
-protected:
     typedef T integral_type;
+protected:
 private:
     T i;
 
