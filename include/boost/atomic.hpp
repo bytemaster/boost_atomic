@@ -14,7 +14,7 @@
 #include <boost/memory_order.hpp>
 #include <boost/atomic/platform.hpp>
 #include <boost/atomic/detail/base.hpp>
-#include <boost/atomic/detail/integral-casts.hpp>
+//#include <boost/atomic/detail/integral-casts.hpp>
 
 namespace boost {
 
